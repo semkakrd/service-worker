@@ -17,6 +17,7 @@ export default defineConfig({
                 "service-worker": "src/service-worker.ts",
             },
             output: {
+                format:"iife",
                 entryFileNames: "[name].js",
             },
         },
