@@ -40,7 +40,7 @@ const fetchNotification = async (): Promise<NotificationData | null> => {
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
         const json = await response.json();
-        return json?.data?.data ?? null;
+        return json?.data ?? null;
     } catch (error) {
         console.error('Ошибка при получении уведомления:', error);
         return null;
