@@ -1,4 +1,5 @@
-// src/firebase-messaging-sw.ts
+import {initializeApp} from "firebase/app";
+import {getMessaging, onBackgroundMessage} from "firebase/messaging/sw";
 
 interface NotificationData {
     id?: number;
@@ -12,6 +13,21 @@ interface NotificationData {
 
 declare const self: ServiceWorkerGlobalScope;
 
+const firebaseApp = initializeApp({
+    apiKey: 'AIzaSyBvEJNAuJK3GIA-2ninOXhIQMlLpidVGSQ',
+    authDomain: 'api-project-586854317896.firebaseapp.com',
+    databaseURL: 'https://api-project-586854317896.firebaseio.com',
+    projectId: 'api-project-586854317896',
+    storageBucket: 'api-project-586854317896.appspot.com',
+    messagingSenderId: '586854317896',
+    appId: '1:586854317896:web:bc3ae45a1417a2df5bfd7d',
+    measurementId: 'G-T6GE7129SW',
+});
+
+
+// Retrieve an instance of Firebase Messaging so that it can handle background
+// messages.
+const messaging = getMessaging(firebaseApp);
 // =======================
 // === IndexedDB Setup ===
 // =======================
@@ -25,7 +41,7 @@ const openDB = (): Promise<IDBDatabase> => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = (event) => {
             const db = (event.target as IDBOpenDBRequest).result;
-            db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            db.createObjectStore(STORE_NAME, {keyPath: 'id'});
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror = () => reject(request.error);
@@ -37,7 +53,7 @@ const saveClickedNotification = async (id: number): Promise<void> => {
     return new Promise((resolve, reject) => {
         const transaction = db.transaction(STORE_NAME, 'readwrite');
         const store = transaction.objectStore(STORE_NAME);
-        const request = store.put({ id });
+        const request = store.put({id});
         request.onsuccess = () => resolve();
         request.onerror = () => reject(request.error);
         db.close();
@@ -61,7 +77,7 @@ const getClickedNotifications = async (): Promise<number[]> => {
 // =======================
 
 const postToEndpoint = async (url: string) => {
-    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const response = await fetch(url, {method: 'POST', headers: {'Content-Type': 'application/json'}});
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 };
 
@@ -76,8 +92,8 @@ const fetchNotification = async (excludeIds: number[]): Promise<NotificationData
     try {
         const response = await fetch('https://api.traffix.pro/public/web-push/notification', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ exclude_ids: excludeIds }),
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({exclude_ids: excludeIds}),
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const json = await response.json();
@@ -92,7 +108,7 @@ const fetchNotification = async (excludeIds: number[]): Promise<NotificationData
 // === Push Event Handler ===
 // ==========================
 
-self.addEventListener('push', async () => {
+onBackgroundMessage(messaging, async () => {
     try {
         await new Promise((r) => setTimeout(r, Math.random() * 5000));
 
@@ -112,14 +128,15 @@ self.addEventListener('push', async () => {
             vibrate: [200, 100, 200],
             badge: data.badge,
             requireInteraction: true,
-            data: { id: data.id, url: data.target_url },
+            data: {id: data.id, url: data.target_url},
         });
 
         void trackImpression(data.id).catch((err) => console.error('Ошибка трекинга показа:', err));
     } catch (err) {
         console.error('Ошибка в push-обработчике:', err);
     }
-});
+})
+
 
 // ===========================
 // === Install & Activate ====
@@ -134,7 +151,7 @@ self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim(
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const { id, url } = event.notification.data || {};
+    const {id, url} = event.notification.data || {};
 
     if (id) {
         void saveClickedNotification(id).catch((err) => console.error('Ошибка сохранения клика:', err));
