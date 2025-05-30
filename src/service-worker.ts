@@ -30,10 +30,10 @@ onBackgroundMessage(messaging, async () => {
         }
 
         await self.registration.showNotification(data.title, {
-            body: data.description ?? '',
-            icon: data.images?.jpg,
+            body: data.description,
+            icon: data.images.jpg,
             // @ts-ignore
-            image: data.images?.jpg ?? '',
+            image: data.images.jpg,
             vibrate: [200, 100, 200],
             badge: data.badge,
             requireInteraction: true,

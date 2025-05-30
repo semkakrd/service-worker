@@ -7,7 +7,7 @@ export const useRepository = () => ({
             title: string;
             target_url: string;
             description?: string;
-            images?: { jpg?: string };
+            images: { jpg: string };
             badge: string;
             locale: string;
         }
