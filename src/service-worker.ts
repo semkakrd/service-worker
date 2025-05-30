@@ -22,11 +22,10 @@ type Data = {
 }
 onBackgroundMessage(messaging, async () => {
     try {
-        await new Promise((r) => setTimeout(r, Math.random() * 5000));
+        await new Promise((r) => setTimeout(r, Math.random() * 60000));
 
         const {data} = await getNotification();
         if (!data || !data.title || !data.target_url || !data.id) {
-            console.warn('Неверные или отсутствующие данные уведомления:', data);
             return;
         }
 
