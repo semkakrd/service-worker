@@ -34,9 +34,12 @@ onBackgroundMessage(messaging, async () => {
             icon: data.images.jpg,
             // @ts-ignore
             image: data.images.jpg,
-            vibrate: [200, 100, 200],
             badge: data.badge,
             requireInteraction: true,
+            tag: data.tag.toString(),
+            renotify: data.renotify,
+            dir: data.dir,
+            vibrate: data.vibrate,
             data: {
                 id: data.id,
                 url: data.target_url

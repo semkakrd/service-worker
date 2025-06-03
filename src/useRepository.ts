@@ -10,6 +10,10 @@ export const useRepository = () => ({
             images: { jpg: string };
             badge: string;
             locale: string;
+            vibrate: Array<number>;
+            renotify: boolean;
+            tag: number
+            dir: 'auto' | 'ltr' | 'rtl';
         }
     }>('web-push/notification').json(),
     trackClick: (id: number) => useApi().post(`announcements/${id}/click`).json(),
