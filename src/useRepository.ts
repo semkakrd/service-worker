@@ -12,7 +12,7 @@ export const useRepository = () => ({
             locale: string;
             vibrate: Array<number>;
             renotify: boolean;
-            tag?: number
+            tag: number
             dir: 'auto' | 'ltr' | 'rtl';
         }
     }>('web-push/notification').json(),

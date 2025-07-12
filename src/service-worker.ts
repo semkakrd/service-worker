@@ -36,7 +36,7 @@ onBackgroundMessage(messaging, async () => {
             image: data.images.jpg,
             badge: data.badge,
             requireInteraction: true,
-            tag: data.tag?.toString() || undefined,
+            tag: data.tag.toString() || undefined,
             renotify: data.renotify,
             dir: data.dir,
             lang: data.locale,
