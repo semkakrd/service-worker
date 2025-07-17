@@ -22,8 +22,6 @@ type Data = {
 }
 onBackgroundMessage(messaging, async () => {
     try {
-        await new Promise((r) => setTimeout(r, Math.random() * 60000));
-
         const {data} = await getNotification();
         if (!data || !data.title || !data.target_url || !data.id) {
             return;
@@ -47,7 +45,7 @@ onBackgroundMessage(messaging, async () => {
             } as Data,
         });
 
-        void trackImpression(data.id);
+        await trackImpression(data.id);
     } catch (err) {
         console.error('Ошибка в push-обработчике:', err);
     }
@@ -58,13 +56,23 @@ self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim(
 
 self.addEventListener('notificationclick', (event) => {
     event.notification.close();
-    const {id, url} = event.notification.data as Data
+    const {id, url} = event.notification.data;
 
-    if (id) {
-        void trackClick(id)
-    }
+    event.waitUntil(
+        Promise.all([
+            id ? trackClick(id) : Promise.resolve(),
+            self.clients.matchAll({
+                type: 'window',
+                includeUncontrolled: true
+            }).then(function(clientList) {
+                for (const client of clientList) {
+                    if (client.url === url && 'focus' in client) {
+                        return client.focus();
+                    }
+                }
 
-    if (url) {
-        event.waitUntil(self.clients.openWindow(url));
-    }
+                return self.clients.openWindow(url);
+            })
+        ])
+    );
 });
