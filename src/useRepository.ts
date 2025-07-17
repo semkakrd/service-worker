@@ -1,4 +1,5 @@
 import {useApi} from "./useApi.ts";
+import {Languages} from "./service-worker.ts";
 
 export const useRepository = () => ({
     getNotification: () => useApi().get<{
@@ -9,7 +10,7 @@ export const useRepository = () => ({
             description?: string;
             images: { jpg: string };
             badge: string;
-            locale: string;
+            locale: Languages;
             vibrate: Array<number>;
             renotify: boolean;
             tag: number
