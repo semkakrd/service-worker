@@ -81,7 +81,7 @@ onBackgroundMessage(messaging, async () => {
         if (!data || !data.title || !data.target_url || !data.id) {
             return;
         }
-        const options = {
+        const options : NotificationOptions = {
             body: data.description,
             icon: data.images.jpg,
             // @ts-ignore
@@ -99,16 +99,16 @@ onBackgroundMessage(messaging, async () => {
             } as Data,
         }
 
-        if (data.locale as Languages in actions) {
+        if (data.locale in actions) {
             // @ts-ignore
             options.actions = [
                 {
-                    action: 'close',
-                    title: actions[data.locale].close,
-                },
-                {
                     action: 'open',
                     title: actions[data.locale].open,
+                },
+                {
+                    action: 'close',
+                    title: actions[data.locale].close,
                 }
             ]
         }
