@@ -7,6 +7,7 @@ export interface NotificationModel {
     image: string,
     target_url: string,
     locale: Language
+    icon: string
     badge: string,
     vibrate?: number[],
     renotify?: boolean,

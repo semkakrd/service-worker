@@ -5,6 +5,11 @@ import { Language } from "./types/language.type.ts";
 
 declare const self: ServiceWorkerGlobalScope;
 
+interface Data {
+  id: number;
+  url: string;
+};
+
 const firebaseApp = initializeApp({
   apiKey: "AIzaSyBvEJNAuJK3GIA-2ninOXhIQMlLpidVGSQ",
   authDomain: "api-project-586854317896.firebaseapp.com",
@@ -17,11 +22,6 @@ const firebaseApp = initializeApp({
 });
 const { trackClick, trackImpression, getNotification } = useRepository();
 const messaging = getMessaging(firebaseApp);
-type Data = {
-  id: number;
-  url: string;
-};
-
 const actions: Record<
   Language,
   {
@@ -78,45 +78,58 @@ const actions: Record<
 
 onBackgroundMessage(messaging, async () => {
   try {
-    const { data } = await getNotification();
-    if (!data || !data.title || !data.target_url || !data.id) {
+    const {
+      title,
+      target_url,
+      locale,
+      tag,
+      badge,
+      id,
+      icon,
+      description,
+      renotify,
+      dir,
+      vibrate,
+      image,
+    } = (await getNotification()).data;
+    if (!title || !target_url || !id) {
       return;
     }
     const options: NotificationOptions = {
-      body: data.description || "",
-      icon: data.image,
+      body: description || "",
+      icon,
       // @ts-ignore
-      image: data.image,
-      badge: data.badge,
+      image,
+      badge,
       requireInteraction: true,
-      tag: data?.tag?.toString() || undefined,
-      renotify: data.renotify,
-      dir: data.dir,
-      lang: data.locale,
-      vibrate: data.vibrate,
+      tag: tag?.toString() || undefined,
+      renotify,
+      dir,
+      lang: locale,
+      vibrate,
       data: {
-        id: data.id,
-        url: data.target_url,
+        id,
+        url: target_url,
       } as Data,
     };
 
-    if (data.locale in actions) {
+    if (locale in actions) {
       // @ts-ignore
       options.actions = [
         {
           action: "open",
-          title: actions[data.locale].open,
+          title: actions[locale].open,
         },
         {
           action: "close",
-          title: actions[data.locale].close,
+          title: actions[locale].close,
         },
       ];
     }
 
-    await self.registration.showNotification(data.title, options);
+    await self.registration.showNotification(title, options);
 
-    await trackImpression(data.id);
+    await trackImpression(id);
   } catch (err) {
     console.error("Ошибка в push-обработчике:", err);
   }
@@ -125,13 +138,14 @@ onBackgroundMessage(messaging, async () => {
 self.addEventListener("install", (event) =>
   event.waitUntil(self.skipWaiting()),
 );
+
 self.addEventListener("activate", (event) =>
   event.waitUntil(self.clients.claim()),
 );
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const { id, url } = event.notification.data;
+  const { id, url } : Data = event.notification.data;
 
   event.waitUntil(
     Promise.all([
