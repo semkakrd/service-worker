@@ -12,7 +12,7 @@ export default defineConfig({
         cssTarget: ["chrome70", "firefox63", "safari12", "edge79"],
         minify: "esbuild",
         modulePreload: false,
-        rollupOptions: {
+        rolldownOptions: {
             input: {
                 "service-worker": "src/service-worker.ts",
             },
