@@ -10,6 +10,8 @@ interface Data {
   url: string;
 };
 
+type ActionLocale = Language | "sr-Latn" | "sr-Cyrl";
+
 const firebaseApp = initializeApp({
   apiKey: "AIzaSyBvEJNAuJK3GIA-2ninOXhIQMlLpidVGSQ",
   authDomain: "api-project-586854317896.firebaseapp.com",
@@ -23,7 +25,7 @@ const firebaseApp = initializeApp({
 const { trackClick, trackImpression, getNotification } = useRepository();
 const messaging = getMessaging(firebaseApp);
 const actions: Record<
-  Language,
+  ActionLocale,
   {
     close: string;
     open: string;
@@ -55,6 +57,7 @@ const actions: Record<
   bs: { close: "Zatvori ❌", open: "Prikaži više 🔍" }, // Боснийский
   el: { close: "Κλείσιμο ❌", open: "Δείξε περισσότερα 🔍" }, // Греческий
   ka: { close: "დახურვა ❌", open: "მეტის ჩვენება 🔍" }, // Грузинский
+  he: { close: "סגור ❌", open: "הצג עוד 🔍" }, // Иврит
   id: { close: "Tutup ❌", open: "Tampilkan lebih banyak 🔍" }, // Индонезийский
   kk: { close: "Жабу ❌", open: "Толығымен көрсету 🔍" }, // Казахский (альтернативный)
   ky: { close: "Жабуу ❌", open: "Толук көрсөтүү 🔍" }, // Киргизский
@@ -64,7 +67,9 @@ const actions: Record<
   mk: { close: "Затвори ❌", open: "Покажи повеќе 🔍" }, // Македонский
   ms: { close: "Tutup ❌", open: "Tunjukkan lebih banyak 🔍" }, // Малайский
   nl: { close: "Sluiten ❌", open: "Toon meer 🔍" }, // Нидерландский
-  sr: { close: "Затвори ❌", open: "Прикажи више 🔍" }, // Сербский
+  sr: { close: "Затвори ❌", open: "Прикажи више 🔍" }, // Сербский (fallback)
+  "sr-Cyrl": { close: "Затвори ❌", open: "Прикажи више 🔍" }, // Сербский, кириллица
+  "sr-Latn": { close: "Zatvori ❌", open: "Prikaži više 🔍" }, // Сербский, латиница
   th: { close: "ปิด ❌", open: "แสดงเพิ่มเติม 🔍" }, // Тайский
   tr: { close: "Kapat ❌", open: "Daha fazla göster 🔍" }, // Турецкий
   uz: { close: "Yopish ❌", open: "Ko‘proq ko‘rsatish 🔍" }, // Узбекский
@@ -76,12 +81,47 @@ const actions: Record<
   da: { close: "Luk ❌", open: "Vis mere 🔍" }, // Датский
 };
 
+const resolveNotificationTargeting = () => {
+  const preferredLocale = self.navigator.language || self.navigator.languages?.[0] || "";
+  const parts = preferredLocale.split(/[-_]/).filter(Boolean);
+  const language = parts[0]?.toLowerCase();
+  const alphabet = parts.find((part) => /^(latn|cyrl)$/i.test(part));
+
+  return {
+    language,
+    alphabet,
+  };
+};
+
+const resolveActionLocale = (
+  language?: string,
+  alphabet?: string | null,
+): ActionLocale | null => {
+  if (!language) {
+    return null;
+  }
+
+  if (language === "sr") {
+    if (alphabet?.toLowerCase() === "latn") {
+      return "sr-Latn";
+    }
+
+    if (alphabet?.toLowerCase() === "cyrl") {
+      return "sr-Cyrl";
+    }
+  }
+
+  return language in actions ? (language as ActionLocale) : null;
+};
+
 onBackgroundMessage(messaging, async () => {
   try {
+    const { language: requestedLanguage, alphabet: requestedAlphabet } = resolveNotificationTargeting();
     const {
       title,
       target_url,
-      locale,
+      language,
+      alphabet,
       tag,
       badge,
       id,
@@ -91,10 +131,16 @@ onBackgroundMessage(messaging, async () => {
       dir,
       vibrate,
       image,
-    } = (await getNotification()).data;
+    } = (await getNotification({
+      language: requestedLanguage,
+      alphabet: requestedAlphabet,
+    })).data;
     if (!title || !target_url || !id) {
       return;
     }
+
+    const actionLocale = resolveActionLocale(language, alphabet);
+    const notificationLanguage = actionLocale ?? language;
     const options: NotificationOptions = {
       body: description || "",
       icon,
@@ -105,7 +151,7 @@ onBackgroundMessage(messaging, async () => {
       tag: tag?.toString() || undefined,
       renotify,
       dir,
-      lang: locale,
+      lang: notificationLanguage,
       vibrate,
       data: {
         id,
@@ -113,16 +159,16 @@ onBackgroundMessage(messaging, async () => {
       } as Data,
     };
 
-    if (locale in actions) {
+    if (actionLocale) {
       // @ts-ignore
       options.actions = [
         {
           action: "open",
-          title: actions[locale].open,
+          title: actions[actionLocale].open,
         },
         {
           action: "close",
-          title: actions[locale].close,
+          title: actions[actionLocale].close,
         },
       ];
     }
@@ -139,9 +185,9 @@ self.addEventListener("install", (event) =>
   event.waitUntil(self.skipWaiting()),
 );
 
-self.addEventListener("activate", (event) =>
-  event.waitUntil(self.clients.claim()),
-);
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();

@@ -1,7 +1,7 @@
 import ky from "ky";
 
 export const api = ky.create({
-  prefix: `https://api.traffix.pro/public`,
+  baseUrl: `https://api.traffix.pro/public`,
   headers: {
     "Content-Type": "application/json",
   },

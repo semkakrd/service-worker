@@ -6,7 +6,8 @@ export interface NotificationModel {
     description?: string | null,
     image: string,
     target_url: string,
-    locale: Language
+    language: Language
+    alphabet?: string | null,
     icon: string
     badge: string,
     vibrate?: number[],
