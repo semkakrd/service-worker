@@ -5,6 +5,4 @@ export const api = ky.create({
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 30000,
-  retry: 10,
 });

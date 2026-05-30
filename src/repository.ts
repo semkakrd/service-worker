@@ -11,7 +11,6 @@ export const useRepository = () => ({
         },
       })
       .json<Response<NotificationModel>>(),
-  trackClick: (id: number) => api.post(`announcements/${id}/click`).json(),
   trackImpression: (id: number) =>
     api.post(`announcements/${id}/impression`).json(),
 });

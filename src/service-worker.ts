@@ -22,7 +22,7 @@ const firebaseApp = initializeApp({
   appId: "1:586854317896:web:bc3ae45a1417a2df5bfd7d",
   measurementId: "G-T6GE7129SW",
 });
-const { trackClick, trackImpression, getNotification } = useRepository();
+const { trackImpression, getNotification } = useRepository();
 const messaging = getMessaging(firebaseApp);
 const actions: Record<
   ActionLocale,
@@ -191,25 +191,22 @@ self.addEventListener("activate", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const { id, url } : Data = event.notification.data;
+  const { url } : Data = event.notification.data;
 
   event.waitUntil(
-    Promise.all([
-      id ? trackClick(id) : Promise.resolve(),
-      self.clients
-        .matchAll({
-          type: "window",
-          includeUncontrolled: true,
-        })
-        .then((clientList) => {
-          for (const client of clientList) {
-            if (client.url === url && "focus" in client) {
-              return client.focus();
-            }
+    self.clients
+      .matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      })
+      .then((clientList) => {
+        for (const client of clientList) {
+          if (client.url === url && "focus" in client) {
+            return client.focus();
           }
+        }
 
-          return self.clients.openWindow(url);
-        }),
-    ]),
+        return self.clients.openWindow(url);
+      }),
   );
 });
